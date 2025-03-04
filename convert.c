@@ -5,11 +5,26 @@
 char *constr16to2(char *str) ;
 const char *con16to2(char str);
 void checknull(void *ptr);
+enum strtype{
+    normal,
+    subnormal,
+    zero,
+    inf,
+    nan
+};
+struct ca25{
+    char *ca25strs16;
+    char *ca25strs2;
+    char *S;
+    char *E;
+    char *M;
+    enum strtype ca25type;
+};
+
 
 int main()
 {
-    char **ca25strs16 = NULL;
-    char **ca25strs2 = NULL;
+    struct ca25 **str = NULL;
     int count = 0;
     char input[17];
 
@@ -18,33 +33,46 @@ int main()
 
         input[strcspn(input, "\n")] = '\0';
 
-        ca25strs16 = realloc(ca25strs16, (count + 1) * sizeof(char *));
-        checknull(ca25strs16);
+        str = realloc(str, (count + 1) * sizeof(struct ca25 *));
+        checknull(str);
+        // 分配内存
+        str[count] = malloc(sizeof(struct ca25));
+        checknull(str[count]);
+        str[count]->ca25strs16 = malloc(17 * sizeof(char));
+        str[count]->ca25strs2 = malloc(65 * sizeof(char));
+        str[count]->E = malloc(2 * sizeof(char));
+        str[count]->M = malloc(9 * sizeof(char));
+        str[count]->S = malloc(9 * sizeof(char));
+        checknull(str[count]->ca25strs16);
+        checknull(str[count]->ca25strs2);
+        checknull(str[count]->E);
+        checknull(str[count]->M);
+        checknull(str[count]->S);
 
-        ca25strs16[count] = malloc(17 * sizeof(char));
-        checknull(ca25strs16[count]);
 
         // 复制输入的字符串到新分配的内存中
-        strncpy(ca25strs16[count], input, 16);
-        ca25strs16[count][17 - 1] = '\0'; // 以'\0'结尾
+        strncpy(str[count]->ca25strs16, input, 16);
+        str[count]->ca25strs16[16] = '\0'; // 以'\0'结尾
 
         count++;
     }
-    ca25strs2 = malloc(count * sizeof(char *));
-    checknull(ca25strs2);
 
     // 打印ca25strs16
     for (int i = 0; i < count; i++)
     {
-        ca25strs2[i] = constr16to2(ca25strs16[i]);
-        printf("%s\t%s\n", ca25strs16[i], ca25strs2[i]);
+        str[i]->ca25strs2 = constr16to2(str[i]->ca25strs16);
+        printf("%s\t%s\n", str[i]->ca25strs16, str[i]->ca25strs2);
     }
     // 释放内存
     for (int i = 0; i < count; i++)
     {
-        free(ca25strs16[i]);
+        free(str[i]->ca25strs16);
+        free(str[i]->ca25strs2);
+        free(str[i]->S);
+        free(str[i]->E);
+        free(str[i]->M);
     }
-    free(ca25strs16);
+    free(str);
 
     return 0;
 }
