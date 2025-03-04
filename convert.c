@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *constr16to2(char *str) ;
+char *constr16to2(int a, char *str) ;
 const char *con16to2(char str);
 void checknull(void *ptr);
+char *constr2to16(int a, char *str);
+char con2to16(char *str);
 enum strtype{
     normal,
     subnormal,
@@ -15,10 +17,16 @@ enum strtype{
 struct ca25{
     char *ca25strs16;
     char *ca25strs2;
-    char *S;
-    char *E;
-    char *M;
-    enum strtype ca25type;
+    char *ca25S;
+    char *ca25E;
+    char *ca25M;
+    char *ca25type;
+    char *fp32strs16;
+    char *fp32strs2;
+    char *fp32S;
+    char *fp32E;
+    char *fp32M;
+    char *fp32type;
 };
 
 
@@ -28,62 +36,154 @@ int main()
     int count = 0;
     char input[17];
 
-    while (fgets(input, 17, stdin) != NULL)
-    {
 
+    //
+    FILE *fp = fopen("testcase.txt", "r");
+    // 读取输入
+    while (fgets(input, 17, fp) != NULL)
+    {
+        if (input[0] == '\n')
+        {
+            continue;
+        }
         input[strcspn(input, "\n")] = '\0';
 
         str = realloc(str, (count + 1) * sizeof(struct ca25 *));
         checknull(str);
         // 分配内存
-        str[count] = malloc(sizeof(struct ca25));
-        checknull(str[count]);
-        str[count]->ca25strs16 = malloc(17 * sizeof(char));
-        str[count]->ca25strs2 = malloc(65 * sizeof(char));
-        str[count]->E = malloc(2 * sizeof(char));
-        str[count]->M = malloc(9 * sizeof(char));
-        str[count]->S = malloc(9 * sizeof(char));
-        checknull(str[count]->ca25strs16);
-        checknull(str[count]->ca25strs2);
-        checknull(str[count]->E);
-        checknull(str[count]->M);
-        checknull(str[count]->S);
-
+        {
+            str[count] = malloc(sizeof(struct ca25));
+            checknull(str[count]);
+            str[count]->ca25strs16 = malloc(17 * sizeof(char));
+            str[count]->ca25strs2 = malloc(65 * sizeof(char));
+            str[count]->ca25S = malloc(2 * sizeof(char));
+            str[count]->ca25E = malloc(9 * sizeof(char));
+            str[count]->ca25M = malloc(11 * sizeof(char));
+            str[count]->ca25type = malloc(10 * sizeof(char));
+            str[count]->fp32strs16 = malloc(9 * sizeof(char));
+            str[count]->fp32strs2 = malloc(33 * sizeof(char));
+            str[count]->fp32S = malloc(2 * sizeof(char));
+            str[count]->fp32E = malloc(3 * sizeof(char));
+            str[count]->fp32M = malloc(7 * sizeof(char));
+            str[count]->fp32type = malloc(10 * sizeof(char));
+            checknull(str[count]->ca25strs16);
+            checknull(str[count]->ca25strs2);
+            checknull(str[count]->ca25S);
+            checknull(str[count]->ca25E);
+            checknull(str[count]->ca25M);
+            checknull(str[count]->fp32strs16);
+            checknull(str[count]->fp32strs2);
+            checknull(str[count]->fp32S);
+            checknull(str[count]->fp32E);
+            checknull(str[count]->fp32M);
+        };
 
         // 复制输入的字符串到新分配的内存中
         strncpy(str[count]->ca25strs16, input, 16);
         str[count]->ca25strs16[16] = '\0'; // 以'\0'结尾
 
+        
         count++;
+        //printf("count:%d\n", count);
     }
+
+    // 处理每个字符串
+    struct ca25 *cur = NULL;
+    for (int i = 0; i < count; i++)
+    {
+        cur = str[i];
+        cur->ca25strs2 = constr16to2(16, str[i]->ca25strs16);
+
+        // ca25S
+        cur->ca25S[0] = cur->ca25strs2[0];
+        cur->ca25S[1] = '\0';
+        
+        // ca25E
+        char ca25Estr[33];
+        strncpy(ca25Estr, cur->ca25strs2 + 1, 32);
+        ca25Estr[32] = '\0';
+        cur->ca25E = constr2to16(32, ca25Estr);
+        
+        // ca25M
+        cur->ca25M[1] = '.';
+        cur->ca25M[10] = '\0';
+        char ca25Mstr[33];
+        strncpy(ca25Mstr, cur->ca25strs2 + 33, 31);
+        ca25Mstr[31] = '0';
+        ca25Estr[32] = '\0';
+        // strcmp(str, "1111") == 0
+        if (strcmp(cur->ca25E, "00000000") == 0) {
+            if (strcmp(cur->ca25M, "00000000000000000000000000000000") == 0) {
+                // ca25 zero
+                cur->ca25type = "zero";
+                strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
+                cur->ca25M[0] = '0';
+            } else {
+                // ca25 subnormal
+                cur->ca25type = "subnormal";
+                strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
+                cur->ca25M[0] = '0';
+            }
+        } else if (strcmp(cur->ca25E, "ffffffff") == 0) {
+            if (strcmp(cur->ca25M, "00000000000000000000000000000000") == 0) {
+                // ca25 infinity
+                cur->ca25type = "inf";
+                strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
+                cur->ca25M[0] = '1';
+            } else {
+                // ca25 NaN
+                cur->ca25type = "nan";
+                strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
+                cur->ca25M[0] = '1';
+            }
+        } else {
+            // normal
+            cur->ca25type = "normal";
+            strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
+            cur->ca25M[0] = '1';
+        }
+    }
+
+
+
+
+
+
+
 
     // 打印ca25strs16
     for (int i = 0; i < count; i++)
     {
-        str[i]->ca25strs2 = constr16to2(str[i]->ca25strs16);
-        printf("%s\t%s\n", str[i]->ca25strs16, str[i]->ca25strs2);
+
+        printf("ca25 S=%s E=%s M=%s %s\n", str[i]->ca25S, str[i]->ca25E, str[i]->ca25M, str[i]->ca25type);
     }
+
     // 释放内存
     for (int i = 0; i < count; i++)
     {
         free(str[i]->ca25strs16);
         free(str[i]->ca25strs2);
-        free(str[i]->S);
-        free(str[i]->E);
-        free(str[i]->M);
+        free(str[i]->ca25S);
+        free(str[i]->ca25E);
+        free(str[i]->ca25M);
+        free(str[i]->fp32strs16);
+        free(str[i]->fp32strs2);
+        free(str[i]->fp32S);
+        free(str[i]->fp32E);
+        free(str[i]->fp32M);
     }
     free(str);
 
     return 0;
 }
 
-char *constr16to2(char *str) {
+char *constr16to2(int a, char *str) {
     // 64 个二进制字符 + 1 个结束符 '\0'
-    char *result = malloc(65 * sizeof(char));
+    char *result = malloc((4 * a + 1) * sizeof(char));
     checknull(result);
 
     // 转换每个十六进制字符
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < a; i++) {
         const char *c = con16to2(str[i]);
         for (int j = 0; j < 4; j++) {
             result[i * 4 + j] = c[j];
@@ -91,7 +191,7 @@ char *constr16to2(char *str) {
         }
         // printf("\n");
     }
-    result[64] = '\0';  // 字符串结束符
+    result[4 * a] = '\0';  // 字符串结束符
 
     return result;
 }
@@ -118,6 +218,41 @@ const char *con16to2(char str) {
     }
 }
 
+char *constr2to16(int a, char *str) {
+    // 分配内存
+    char *result = malloc((a / 4 + 1) * sizeof(char));
+    checknull(result);
+    char block[5];
+    // 转换每 4 个二进制字符
+    for (int i = 0; i < a / 4; i++) {
+        strncpy(block, str + i * 4, 4);
+        block[4] = '\0';
+        result[i] = con2to16(block);
+    }
+    result[a / 4] = '\0';  // 字符串结束符
+
+    return result;
+}
+
+char con2to16(char *str) {
+    if (strcmp(str, "0000") == 0) return '0';
+    if (strcmp(str, "0001") == 0) return '1';
+    if (strcmp(str, "0010") == 0) return '2';
+    if (strcmp(str, "0011") == 0) return '3';
+    if (strcmp(str, "0100") == 0) return '4';
+    if (strcmp(str, "0101") == 0) return '5';
+    if (strcmp(str, "0110") == 0) return '6';
+    if (strcmp(str, "0111") == 0) return '7';
+    if (strcmp(str, "1000") == 0) return '8';
+    if (strcmp(str, "1001") == 0) return '9';
+    if (strcmp(str, "1010") == 0) return 'a';
+    if (strcmp(str, "1011") == 0) return 'b';
+    if (strcmp(str, "1100") == 0) return 'c';
+    if (strcmp(str, "1101") == 0) return 'd';
+    if (strcmp(str, "1110") == 0) return 'e';
+    if (strcmp(str, "1111") == 0) return 'f';
+    return '\0';
+}
 
 void checknull(void *ptr) {
     if (ptr == NULL) {
