@@ -34,9 +34,9 @@ int main()
 
     //
     // FILE *fp = fopen("testcase.txt", "r"); // my testcase.txt
-    FILE *fp = fopen("testcases/total-input.txt", "r");// ca total-input.txt
+    // FILE *fp = fopen("testcases/total-input.txt", "r");// ca total-input.txt
     //  读取输入
-    while (fgets(input, 17, fp) != NULL)
+    while (fgets(input, 17, stdin) != NULL)
     {
         if (input[0] == '\n')
         {
