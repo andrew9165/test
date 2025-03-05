@@ -308,7 +308,7 @@ int main()
                 int jin = 0;
                 for (int i = 0; i < 9; i++)
                 {
-                    if (ca_mantissa[1 + i] == '1')
+                    if (ca_mantissa[22 + i] == '1')
                     {
                         jin = 1;
                         break;
