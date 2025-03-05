@@ -104,16 +104,16 @@ int main()
         ca25Estr[32] = '\0';
         cur->ca25E = constr2to16(32, ca25Estr);
         
-        // ca25M
+        // ca25M, ca25type
         cur->ca25M[1] = '.';
         cur->ca25M[10] = '\0';
         char ca25Mstr[33];
         strncpy(ca25Mstr, cur->ca25strs2 + 33, 31);
         ca25Mstr[31] = '0';
         ca25Estr[32] = '\0';
-        // strcmp(str, "1111") == 0
+        
         if (strcmp(cur->ca25E, "00000000") == 0) {
-            if (strcmp(cur->ca25M, "00000000000000000000000000000000") == 0) {
+            if (strcmp(ca25Mstr, "00000000000000000000000000000000") == 0) {
                 // ca25 zero
                 cur->ca25type = "zero";
                 strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
@@ -125,7 +125,7 @@ int main()
                 cur->ca25M[0] = '0';
             }
         } else if (strcmp(cur->ca25E, "ffffffff") == 0) {
-            if (strcmp(cur->ca25M, "00000000000000000000000000000000") == 0) {
+            if (strcmp(ca25Mstr, "00000000000000000000000000000000") == 0) {
                 // ca25 infinity
                 cur->ca25type = "inf";
                 strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
@@ -142,6 +142,55 @@ int main()
             strncpy(cur->ca25M + 2, constr2to16(32, ca25Mstr), 8);
             cur->ca25M[0] = '1';
         }
+        
+        // cs25strs2 snip
+        // sign
+        char ca_s_snip[2];
+        strncpy(ca_s_snip, cur->ca25strs2, 1);
+        ca_s_snip[1] = '\0';
+        // exponent 1
+        char ca_e_snip1[9];
+        strncpy(ca_e_snip1, cur->ca25strs2 + 1, 8);
+        ca_e_snip1[8] = '\0';
+        // exponent 2
+        char ca_e_snip2[25];
+        strncpy(ca_e_snip2, cur->ca25strs2 + 9, 24);
+        ca_e_snip2[24] = '\0';
+        // mantissa 1
+        char ca_m_snip1[24];
+        strncpy(ca_m_snip1, cur->ca25strs2 + 33, 23);
+        ca_m_snip1[23] = '\0';
+        // mantissa 2
+        char ca_m_snip2[9];
+        strncpy(ca_m_snip2, cur->ca25strs2 + 56, 8);
+        ca_m_snip2[8] = '\0';
+
+        // fp32S
+        cur->fp32strs2[0] = cur->ca25strs2[0];
+        cur->fp32strs2[32] = '\0';
+
+        if (strcmp(cur->ca25type, "zero") == 0){
+            // zero
+            strncpy(cur->fp32strs2 + 1, "0000000000000000000000000000000", 32);
+            cur->fp32type = cur->ca25type;
+        } else if (strcmp(cur->ca25type, "inf") == 0) {
+            // infinity
+            strncpy(cur->fp32strs2 + 1, "1111111100000000000000000000000", 32);
+            cur->fp32type = cur->ca25type;
+        } else if (strcmp(cur->ca25type, "subnormal") == 0) {
+            // subnormal
+            strncpy(cur->fp32strs2 + 1, "0000000000000000000000000000001", 32);
+            cur->fp32type = cur->ca25type;
+        } else if (strcmp(cur->ca25type, "nan") == 0) {
+            // nan
+            strncpy(cur->fp32strs2 + 1, "11111111", 9);
+            strncpy(cur->fp32strs2 + 9, ca_m_snip1, 24);
+            cur->fp32type = cur->ca25type;
+        } else {
+            // normal
+            
+        }
+    
     }
 
 
@@ -154,8 +203,7 @@ int main()
     // 打印ca25strs16
     for (int i = 0; i < count; i++)
     {
-
-        printf("ca25 S=%s E=%s M=%s %s\n", str[i]->ca25S, str[i]->ca25E, str[i]->ca25M, str[i]->ca25type);
+        printf("ca25 S=%s E=%s M=%s %s\n\n\n", str[i]->ca25S, str[i]->ca25E, str[i]->ca25M, str[i]->ca25type);
     }
 
     // 释放内存
@@ -260,3 +308,15 @@ void checknull(void *ptr) {
         exit(EXIT_FAILURE);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
